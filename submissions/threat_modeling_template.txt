@@ -1,0 +1,66 @@
+    Docker Threat Modeling
+
+1. Elevation of Privilege
+The Docker daemon listens on a Unix socket or TCP port, which can be accessed by users or processes with sufficient privileges.
+If an attacker gains access to the Docker socket, they can execute arbitrary commands as the root user on the host, leading to privilege escalation.
+
+2. Tampering
+Containers are isolated from each other and the host system, but vulnerabilities in the container runtime can lead to escape scenarios.
+An attacker exploiting a vulnerability in the container runtime could tamper with other containers or the host system by escaping the container isolation.
+
+3. Information Disclosure
+Docker images may contain outdated or vulnerable software packages.
+If an attacker exploits a vulnerability in an image, they may gain access to sensitive data stored within the container or on the host.
+
+4. Spoofing
+Pulling images from untrusted or insecure registries can introduce malicious code into the environment.
+An attacker could spoof a legitimate image by uploading a malicious image to a registry, leading to the deployment of compromised containers.
+
+5. Denial of Service
+Containers communicate over a network, which can be intercepted or manipulated.
+An attacker could flood the container network with traffic, leading to service disruptions or denial of access to legitimate users.
+
+
+    Kubernetes Threat Modeling
+
+1. Information Disclosure
+etcd stores the configuration data and state of the Kubernetes cluster.
+If etcd is not secured properly, an attacker could gain access to sensitive information, such as secrets and configuration data.
+
+2. Spoofing
+The API server is the central management entity that exposes the Kubernetes API.
+If an attacker can spoof their identity, they may gain unauthorized access to the API server and manipulate resources.
+
+3. Elevation of Privilege
+The Kubelet manages the pods on each worker node and exposes an API for communication.
+An attacker exploiting vulnerabilities in the Kubelet API could gain elevated privileges on the worker node.
+
+4. Tampering
+Network policies control the communication between pods.
+An attacker could manipulate network policies to allow unauthorized access between pods, potentially leading to data breaches.
+
+5. Denial of Service
+Pod security policies define security conditions for pod creation and updates.
+If an attacker can bypass or manipulate pod security policies, they could deploy malicious pods that consume excessive resources, leading to denial of service for legitimate workloads.
+
+    
+    Docker-bench Run Results and Analysis
+    From the failed findings, select and document 3 findings from the Docker-bench results that you want to harden based on the 5 attack surface areas you identified in Step 1. At least 1 of the 3 hardened findings should be different from the ones mentioned in the exercise (i.e. 5.10, 5.14, and 5.22).
+
+2.15 Ensure live restore is Enabled (Manual) ok
+	start dockerd with --live-restore
+Spoofing: By maintaining the state of running containers during a Docker daemon restart, --live-restore reduces the risk of spoofing attacks. If the daemon is restarted, the containers remain running, which means that an attacker cannot exploit the downtime to spoof legitimate services.
+Tampering:  With --live-restore, the containers are less dependent on the Docker daemon. This separation can help mitigate risks associated with vulnerabilities in the daemon itself, which could be exploited to tamper with running containers during a restart. 
+Repudiation: The ability to keep containers running during daemon restarts can help maintain a consistent state and logging. This consistency can aid in accountability and traceability, making it harder for malicious actors to repudiate actions taken during a restart.
+
+2.16 Ensure Userland Proxy is Disabled (Manual) ok
+	start dockerd with --userland-proxy=false
+Spoofing: By disabling the userland proxy, Docker uses the kernel's networking stack directly, which reduces the chances of an attacker spoofing network traffic. This is because the userland proxy can introduce additional layers where spoofing could occur.
+Tampering: With --userland-proxy=false, Docker relies on the kernel's networking features, which are generally more secure than userland implementations. This reduces the risk of tampering with network packets as they traverse the network stack.
+Repudiation: Disabling the userland proxy can lead to clearer logging and monitoring of network traffic. This can help in establishing accountability and traceability, making it harder for malicious actors to repudiate their actions.
+
+5.11 Ensure that the memory usage for container is limited (Manual) ok
+	docker run --interactive --tty --memory 512m frankdesantes/udacitysecurity:hardened-v1.0 /bin/bash
+Denial of Service: Limiting memory is to protect against denial of service attacks. If an attacker tries to overwhelm the application with requests, a memory limit can prevent the application from consuming all available resources, ensuring that it remains responsive to legitimate users.
+
+

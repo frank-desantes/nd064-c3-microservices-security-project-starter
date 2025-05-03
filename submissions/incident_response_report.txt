@@ -1,0 +1,18 @@
+1. Incident commander name:
+Frank Pohlen
+	
+2. Executive Summary of what happened:
+At 3.5.2025 16:30 three pods running three different crypto miners were launched in our kybernetes cluster in the default namespace.
+	
+3. Summary of what was affected:
+At 3.5.2025 16:30 3 Crypto-mining containers where launched: minergate, moneropool and cryptotonight. 
+The attacker was able to get control of the cluster and run these containers on the cluster. Attackers are after compute resources to abuse for crypto-mining. These containers are also a security risc due to there known vulnerabilities.
+
+4. Summary of the impact:
+At 3.5.2025 16:30 we see a heavily increased CPU, Memory and Bandwith Usage in the Kubernets Compute Resource Cluster Dashboard. This are highly likely due to the launched crypto-mining containers. 
+
+5. Summary of the remediation steps:
+"kubectl --kubeconfig kube_config_cluster.yml delete pod <pod_name> --grace-period=0 --force" was executed for all 3 miners. The Dashboards are showing normal values after removing the crypto-miners.
+
+6. Summary of lessons learned:
+We need to protect us from loaded unexpected images into our cluster by incident or by an attack. This could be archived by using admission controllers allowing only certain images to get launched.
